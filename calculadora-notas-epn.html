@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#6366f1" />
+  <title>Calculadora de notas EPN</title>
+  <style>
+    :root {
+      --text: #0f172a;
+      --muted: #475569;
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --ring: rgba(99, 102, 241, 0.22);
+
+      --glass: rgba(255, 255, 255, 0.6);
+      --glass-strong: rgba(255, 255, 255, 0.78);
+      --glass-soft: rgba(255, 255, 255, 0.38);
+      --glass-field: rgba(255, 255, 255, 0.55);
+      --stroke: rgba(255, 255, 255, 0.7);
+      --stroke-soft: rgba(15, 23, 42, 0.1);
+
+      --pass: #16a34a;
+      --pass-strong: #15803d;
+      --pass-bg: rgba(220, 252, 231, 0.85);
+      --pass-border: rgba(134, 239, 172, 0.9);
+
+      --supp: #d97706;
+      --supp-strong: #92400e;
+      --supp-bg: rgba(254, 243, 199, 0.85);
+      --supp-border: rgba(252, 211, 77, 0.9);
+
+      --fail: #dc2626;
+      --fail-strong: #991b1b;
+      --fail-bg: rgba(254, 226, 226, 0.85);
+      --fail-border: rgba(252, 165, 165, 0.9);
+
+      --info: #2563eb;
+      --info-strong: #1e40af;
+      --info-bg: rgba(219, 234, 254, 0.85);
+      --info-border: rgba(147, 197, 253, 0.9);
+
+      --radius-lg: 28px;
+      --radius-md: 18px;
+      --radius-sm: 14px;
+      --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+      --shadow-card: 0 24px 60px rgba(15, 23, 42, 0.3);
+      --shadow-field: 0 8px 20px rgba(99, 102, 241, 0.14);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      font-family: "Inter", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background: linear-gradient(120deg, #6366f1, #8b5cf6, #ec4899, #06b6d4, #6366f1);
+      background-size: 300% 300%;
+      animation: gradientShift 20s ease infinite;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: clamp(16px, 4vw, 40px);
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at 18% 15%, rgba(255, 255, 255, 0.32), transparent 32%),
+        radial-gradient(circle at 82% 78%, rgba(255, 255, 255, 0.2), transparent 36%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    @keyframes gradientShift {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    ::selection {
+      background: rgba(99, 102, 241, 0.3);
+    }
+
+    .calculator {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 640px;
+      background: var(--glass);
+      backdrop-filter: blur(20px) saturate(1.5);
+      -webkit-backdrop-filter: blur(20px) saturate(1.5);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-card), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+      padding: clamp(22px, 5vw, 40px);
+      color: var(--text);
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 8px;
+    }
+
+    .logo {
+      flex: 0 0 auto;
+      width: 50px;
+      height: 50px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 800;
+      font-size: 0.95rem;
+      letter-spacing: 0.04em;
+      background: linear-gradient(135deg, var(--primary), #06b6d4);
+      box-shadow: 0 10px 24px rgba(79, 70, 229, 0.35);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.4rem, 4.5vw, 1.8rem);
+      line-height: 1.2;
+      color: var(--text);
+      text-wrap: balance;
+    }
+
+    .subtitle {
+      margin: 0 0 clamp(18px, 4vw, 28px);
+      color: var(--muted);
+      font-size: clamp(0.9rem, 3.5vw, 0.98rem);
+      max-width: 62ch;
+    }
+
+    .grades {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: clamp(14px, 3vw, 18px);
+    }
+
+    @media (min-width: 560px) {
+      .grades {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    input {
+      width: 100%;
+      min-width: 0;
+      padding: 14px 46px 14px 16px;
+      border: 1.5px solid var(--stroke-soft);
+      border-radius: var(--radius-sm);
+      font: inherit;
+      font-size: 1.05rem;
+      color: var(--text);
+      background: var(--glass-field);
+      outline: none;
+      appearance: textfield;
+      -moz-appearance: textfield;
+      transition:
+        border-color 0.2s var(--ease-spring),
+        box-shadow 0.2s var(--ease-spring),
+        background-color 0.2s var(--ease-spring),
+        transform 0.2s var(--ease-spring);
+    }
+
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    input::placeholder {
+      color: rgba(71, 85, 105, 0.55);
+    }
+
+    input:focus {
+      border-color: var(--primary);
+      background: #fff;
+      box-shadow: var(--shadow-field), 0 0 0 4px var(--ring);
+      transform: translateY(-1px);
+    }
+
+    input.invalid {
+      border-color: var(--fail);
+      background: rgba(254, 226, 226, 0.6);
+    }
+
+    input.invalid:focus {
+      box-shadow: 0 8px 20px rgba(220, 38, 38, 0.14), 0 0 0 4px rgba(220, 38, 38, 0.18);
+    }
+
+    .unit {
+      position: absolute;
+      top: 50%;
+      right: 14px;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-weight: 700;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .hint {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      min-height: 1.2em;
+    }
+
+    .actions {
+      margin-top: clamp(18px, 4vw, 26px);
+    }
+
+    button {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius-sm);
+      font: inherit;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      color: var(--text);
+      background: var(--glass-strong);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+      transition:
+        transform 0.15s var(--ease-spring),
+        box-shadow 0.2s var(--ease-spring),
+        background-color 0.2s var(--ease-spring);
+      touch-action: manipulation;
+    }
+
+    @media (min-width: 560px) {
+      button {
+        width: auto;
+        min-width: 150px;
+      }
+
+      .actions {
+        display: flex;
+        gap: 12px;
+      }
+    }
+
+    button:hover {
+      background: #fff;
+      box-shadow: 0 12px 26px rgba(15, 23, 42, 0.16);
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    button:focus-visible {
+      outline: 3px solid var(--ring);
+      outline-offset: 2px;
+    }
+
+    .result {
+      margin-top: clamp(20px, 5vw, 30px);
+      border-radius: var(--radius-md);
+      padding: clamp(16px, 4vw, 22px);
+      text-align: center;
+      background: var(--glass-soft);
+      border: 2px solid var(--stroke-soft);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(12px) scale(0.98);
+      transition:
+        opacity 0.35s var(--ease-spring),
+        transform 0.35s var(--ease-spring),
+        visibility 0s linear 0.35s,
+        background-color 0.3s var(--ease-spring),
+        border-color 0.3s var(--ease-spring);
+    }
+
+    .result.visible {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0) scale(1);
+      transition:
+        opacity 0.35s var(--ease-spring),
+        transform 0.35s var(--ease-spring),
+        visibility 0s linear 0s,
+        background-color 0.3s var(--ease-spring),
+        border-color 0.3s var(--ease-spring);
+    }
+
+    .result.pass {
+      background: var(--pass-bg);
+      border-color: var(--pass-border);
+      color: var(--pass-strong);
+    }
+
+    .result.supp {
+      background: var(--supp-bg);
+      border-color: var(--supp-border);
+      color: var(--supp-strong);
+    }
+
+    .result.fail {
+      background: var(--fail-bg);
+      border-color: var(--fail-border);
+      color: var(--fail-strong);
+    }
+
+    .result.info {
+      background: var(--info-bg);
+      border-color: var(--info-border);
+      color: var(--info-strong);
+    }
+
+    .result-status {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: clamp(1.1rem, 4vw, 1.4rem);
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      margin-bottom: 8px;
+      padding: 6px 16px;
+      border-radius: 999px;
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+    }
+
+    .result-status svg {
+      width: 1.15em;
+      height: 1.15em;
+      flex: 0 0 auto;
+    }
+
+    .result.pass .result-status {
+      background: var(--pass);
+    }
+
+    .result.supp .result-status {
+      background: var(--supp);
+    }
+
+    .result.fail .result-status {
+      background: var(--fail);
+    }
+
+    .result.info .result-status {
+      background: var(--info);
+    }
+
+    .result-details {
+      font-size: clamp(0.9rem, 3.5vw, 0.98rem);
+      line-height: 1.6;
+      color: var(--text);
+      text-wrap: pretty;
+      overflow-wrap: break-word;
+    }
+
+    .rules {
+      margin-top: clamp(20px, 5vw, 30px);
+      padding: clamp(14px, 3.5vw, 18px);
+      background: var(--glass-soft);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius-md);
+      color: var(--muted);
+      font-size: 0.86rem;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .rules strong {
+      color: var(--text);
+      font-size: 0.9rem;
+    }
+
+    .rules ul {
+      margin: 8px 0 0;
+      padding-left: 20px;
+      line-height: 1.7;
+    }
+
+    .rules li::marker {
+      color: var(--primary);
+    }
+
+    @media (max-width: 380px) {
+      .logo {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        font-size: 0.85rem;
+      }
+
+      .header {
+        gap: 10px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="calculator">
+    <div class="header">
+      <div class="logo" aria-hidden="true">EPN</div>
+      <h1>Calculadora de notas</h1>
+    </div>
+
+    <p class="subtitle">
+      Ingresa la nota de cada bimestre. Cada bimestre se califica sobre 20. El resultado se actualiza automáticamente; si dejas uno vacío, verás la nota mínima que necesitas en el otro para aprobar.
+    </p>
+
+    <form id="grade-form" novalidate>
+      <div class="grades">
+        <div>
+          <label for="bimester1">Primer bimestre</label>
+          <div class="input-wrap">
+            <input
+              id="bimester1"
+              name="bimester1"
+              type="number"
+              min="0"
+              max="20"
+              step="0.01"
+              inputmode="decimal"
+              placeholder="Ej. 14.50"
+              autocomplete="off"
+              aria-describedby="hint1"
+            />
+            <span class="unit" aria-hidden="true">/20</span>
+          </div>
+          <div class="hint" id="hint1">Entre 0 y 20</div>
+        </div>
+
+        <div>
+          <label for="bimester2">Segundo bimestre</label>
+          <div class="input-wrap">
+            <input
+              id="bimester2"
+              name="bimester2"
+              type="number"
+              min="0"
+              max="20"
+              step="0.01"
+              inputmode="decimal"
+              placeholder="Ej. 13.50"
+              autocomplete="off"
+              aria-describedby="hint2"
+            />
+            <span class="unit" aria-hidden="true">/20</span>
+          </div>
+          <div class="hint" id="hint2">Entre 0 y 20</div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn-clear" id="clear-button">Limpiar</button>
+      </div>
+    </form>
+
+    <section
+      id="result"
+      class="result"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+    >
+      <div class="result-status" id="result-status">—</div>
+      <div class="result-details" id="result-details">—</div>
+    </section>
+
+    <aside class="rules">
+      <strong>Reglas de evaluación</strong>
+      <ul>
+        <li>Suma igual o mayor a 28: aprueba.</li>
+        <li>Suma menor a 28 pero mayor o igual a 18: supletorio. Puntos necesarios en recuperación = 51 − suma. Equivalencias: / 20 = puntos / 2; / 10 = puntos / 4.</li>
+        <li>Suma menor a 18: materia perdida.</li>
+        <li>Si dejas un bimestre vacío, la calculadora anticipa la nota mínima en el otro para aprobar directamente.</li>
+      </ul>
+    </aside>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      const form = document.getElementById("grade-form");
+      const input1 = document.getElementById("bimester1");
+      const input2 = document.getElementById("bimester2");
+      const hint1 = document.getElementById("hint1");
+      const hint2 = document.getElementById("hint2");
+      const clearButton = document.getElementById("clear-button");
+      const resultBox = document.getElementById("result");
+      const resultStatus = document.getElementById("result-status");
+      const resultDetails = document.getElementById("result-details");
+
+      const MIN_GRADE = 0;
+      const MAX_GRADE = 20;
+      const PASS_SUM = 28;
+      const SUPLETORIO_MIN_SUM = 18;
+      const RECOVERY_PASS_TOTAL = 51; // suma de bimestres + examen de recuperación
+
+      const ICONS = {
+        pass: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>',
+        supp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+        fail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+        info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+      };
+
+      function formatGrade(value) {
+        return Number(value.toFixed(2)).toString();
+      }
+
+      function readInput(input, hint) {
+        const raw = input.value.trim();
+
+        if (raw === "") {
+          input.classList.remove("invalid");
+          hint.textContent = "Entre 0 y 20";
+          return { state: "empty", value: null };
+        }
+
+        const value = Number(raw);
+
+        if (!Number.isFinite(value)) {
+          input.classList.add("invalid");
+          hint.textContent = "Ingresa un número válido.";
+          return { state: "invalid", value: null };
+        }
+
+        if (value < MIN_GRADE || value > MAX_GRADE) {
+          input.classList.add("invalid");
+          hint.textContent = "La nota debe estar entre 0 y 20.";
+          return { state: "invalid", value: null };
+        }
+
+        input.classList.remove("invalid");
+        hint.textContent = "Entre 0 y 20";
+        return { state: "valid", value: value };
+      }
+
+      function showResult(statusClass, statusText, detailsText) {
+        resultBox.className = "result visible " + statusClass;
+        resultStatus.innerHTML = (ICONS[statusClass] || "") + "<span>" + statusText + "</span>";
+        resultDetails.textContent = detailsText;
+      }
+
+      function hideResult() {
+        resultBox.className = "result";
+        resultStatus.textContent = "—";
+        resultDetails.textContent = "—";
+      }
+
+      function calculate(event) {
+        if (event) {
+          event.preventDefault();
+        }
+
+        const state1 = readInput(input1, hint1);
+        const state2 = readInput(input2, hint2);
+
+        if (state1.state === "invalid" || state2.state === "invalid") {
+          hideResult();
+          return;
+        }
+
+        if (state1.state === "empty" && state2.state === "empty") {
+          hideResult();
+          return;
+        }
+
+        if (state1.state === "valid" && state2.state === "valid") {
+          const grade1 = state1.value;
+          const grade2 = state2.value;
+          const sum = Math.round((grade1 + grade2) * 100) / 100;
+          const average = Math.round((sum / 2) * 100) / 100;
+          const formattedSum = formatGrade(sum);
+          const formattedAverage = formatGrade(average);
+
+          if (sum >= PASS_SUM) {
+            showResult(
+              "pass",
+              "APROBADO",
+              "Suma: " + formattedSum + " / 40 · Promedio: " + formattedAverage + " / 20. La suma es igual o mayor a " + PASS_SUM + "."
+            );
+          } else if (sum >= SUPLETORIO_MIN_SUM) {
+            // Relación conocida: suma 27 -> 24/40 en recuperación.
+            // Por tanto: suma + examen_de_recuperación = 51.
+            // Fórmula: puntos necesarios = 51 - suma.
+            const pointsNeeded = Math.round((RECOVERY_PASS_TOTAL - sum) * 100) / 100;
+            const pointsNeeded20 = Math.round((pointsNeeded / 2) * 100) / 100;
+            const pointsNeeded10 = Math.round((pointsNeeded / 4) * 100) / 100;
+
+            showResult(
+              "supp",
+              "SUPLETORIO",
+              "Suma: " + formattedSum + " / 40 · Promedio: " + formattedAverage + " / 20. " +
+                "Necesitas " + pointsNeeded.toFixed(2) + " / 40 en el examen de recuperación, " +
+                "equivalente a " + pointsNeeded20.toFixed(2) + " / 20 y " + pointsNeeded10.toFixed(2) + " / 10 " +
+                "(fórmula: 51 − suma)."
+            );
+          } else {
+            showResult(
+              "fail",
+              "MATERIA PERDIDA",
+              "Suma: " + formattedSum + " / 40 · Promedio: " + formattedAverage + " / 20. La suma es menor a " + SUPLETORIO_MIN_SUM + "."
+            );
+          }
+
+          return;
+        }
+
+        // Previsión: solo hay una nota válida y el otro bimestre está vacío.
+        const filledIsFirst = state1.state === "valid";
+        const filledGrade = filledIsFirst ? state1.value : state2.value;
+        const filledName = filledIsFirst ? "primer" : "segundo";
+        const emptyName = filledIsFirst ? "segundo" : "primer";
+        const neededToPass = Math.round((PASS_SUM - filledGrade) * 100) / 100;
+        const maxPossibleSum = Math.round((filledGrade + MAX_GRADE) * 100) / 100;
+        const formattedFilled = formatGrade(filledGrade);
+
+        if (neededToPass <= MAX_GRADE) {
+          showResult(
+            "info",
+            "PREVISIÓN",
+            "Con " + formattedFilled + " / 20 en el " + filledName + " bimestre, necesitas al menos " +
+              neededToPass.toFixed(2) + " / 20 en el " + emptyName + " bimestre para aprobar directamente (suma " + PASS_SUM + " / 40)."
+          );
+        } else {
+          showResult(
+            "info",
+            "PREVISIÓN",
+            "Con " + formattedFilled + " / 20 en el " + filledName + " bimestre, no puedes aprobar directo ni con 20 / 20 en el " +
+              emptyName + " bimestre: la suma máxima sería " + formatGrade(maxPossibleSum) + " / 40. " +
+              "Apunta a sumar al menos " + SUPLETORIO_MIN_SUM + " para llegar a supletorio."
+          );
+        }
+      }
+
+      function clearAll() {
+        input1.value = "";
+        input2.value = "";
+        input1.classList.remove("invalid");
+        input2.classList.remove("invalid");
+        hint1.textContent = "Entre 0 y 20";
+        hint2.textContent = "Entre 0 y 20";
+        hideResult();
+        input1.focus();
+      }
+
+      form.addEventListener("submit", calculate);
+      clearButton.addEventListener("click", clearAll);
+
+      [input1, input2].forEach(function (input) {
+        input.addEventListener("input", calculate);
+      });
+    })();
+  </script>
+</body>
+</html>
